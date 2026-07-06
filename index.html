@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sotuv — Mahsulotlar boshqaruvi</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <h1 class="logo">🛒 Sotuv</h1>
+      <div class="stats">
+        <span>Mahsulotlar: <b id="statCount">0</b></span>
+        <span>Umumiy qiymat: <b id="statValue">0</b> so'm</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Mahsulot qo'shish formasi -->
+    <section class="card form-card">
+      <h2>Mahsulot qo'shish</h2>
+      <form id="productForm" class="product-form">
+        <div class="field">
+          <label for="name">Nomi</label>
+          <input type="text" id="name" placeholder="Masalan: Coca-Cola 1L" required />
+        </div>
+        <div class="field">
+          <label for="price">Narxi (so'm)</label>
+          <input type="number" id="price" placeholder="12000" min="0" step="any" required />
+        </div>
+        <div class="field">
+          <label for="qty">Soni</label>
+          <input type="number" id="qty" placeholder="10" min="0" value="1" required />
+        </div>
+        <button type="submit" class="btn btn-primary">＋ Qo'shish</button>
+      </form>
+    </section>
+
+    <!-- Qidiruv -->
+    <div class="toolbar">
+      <input type="search" id="search" placeholder="🔍 Mahsulot qidirish..." />
+    </div>
+
+    <!-- Mahsulotlar ro'yxati -->
+    <section class="card">
+      <table class="table" id="productTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Nomi</th>
+            <th>Narxi</th>
+            <th>Soni</th>
+            <th>Jami</th>
+            <th>Amal</th>
+          </tr>
+        </thead>
+        <tbody id="productBody"></tbody>
+      </table>
+      <p id="emptyState" class="empty">Hozircha mahsulot yo'q. Yuqoridan qo'shing.</p>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
