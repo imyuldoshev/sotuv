@@ -1,7 +1,11 @@
-// Ma'lumotlarni localStorage'da saqlaymiz
-const STORAGE_KEY = "sotuv_products";
+// --- Supabase ulanishi ---
+const SUPABASE_URL = "https://tjvsvspbywjyeuybpbbo.supabase.co";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqdnN2c3BieXdqeWV1eWJwYmJvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMDg0MzQsImV4cCI6MjA5ODg4NDQzNH0.kxVQoIQpDY1smO6RstEcvAMyxkZjNIi3emtt8TnXnlI";
 
-let products = loadProducts();
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let products = [];
 
 // DOM elementlari
 const form = document.getElementById("productForm");
@@ -13,27 +17,30 @@ const emptyState = document.getElementById("emptyState");
 const searchInput = document.getElementById("search");
 const statCount = document.getElementById("statCount");
 const statValue = document.getElementById("statValue");
-
-// --- Saqlash / yuklash ---
-function loadProducts() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-  } catch {
-    return [];
-  }
-}
-
-function saveProducts() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
-}
+const submitBtn = form.querySelector("button[type=submit]");
 
 // --- Formatlash ---
 function formatMoney(num) {
   return new Intl.NumberFormat("uz-UZ").format(num);
 }
 
+// --- Bazadan o'qish ---
+async function fetchProducts() {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    alert("Mahsulotlarni yuklashda xatolik: " + error.message);
+    return;
+  }
+  products = data;
+  render();
+}
+
 // --- Qo'shish ---
-form.addEventListener("submit", (e) => {
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = nameInput.value.trim();
   const price = parseFloat(priceInput.value);
@@ -41,28 +48,34 @@ form.addEventListener("submit", (e) => {
 
   if (!name || isNaN(price) || isNaN(qty)) return;
 
-  products.push({
-    id: Date.now(),
-    name,
-    price,
-    qty,
-  });
+  submitBtn.disabled = true;
+  const { error } = await supabase
+    .from("products")
+    .insert({ name, price, qty });
+  submitBtn.disabled = false;
 
-  saveProducts();
-  render();
+  if (error) {
+    alert("Qo'shishda xatolik: " + error.message);
+    return;
+  }
+
   form.reset();
   qtyInput.value = 1;
   nameInput.focus();
+  await fetchProducts();
 });
 
 // --- O'chirish ---
-function deleteProduct(id) {
+async function deleteProduct(id) {
   const item = products.find((p) => p.id === id);
-  if (item && confirm(`"${item.name}" mahsulotini o'chirasizmi?`)) {
-    products = products.filter((p) => p.id !== id);
-    saveProducts();
-    render();
+  if (!item || !confirm(`"${item.name}" mahsulotini o'chirasizmi?`)) return;
+
+  const { error } = await supabase.from("products").delete().eq("id", id);
+  if (error) {
+    alert("O'chirishda xatolik: " + error.message);
+    return;
   }
+  await fetchProducts();
 }
 
 // --- Qidiruv ---
@@ -91,17 +104,14 @@ function render() {
     tableBody.appendChild(row);
   });
 
-  // O'chirish tugmalariga hodisa biriktirish
   tableBody.querySelectorAll(".btn-danger").forEach((btn) => {
     btn.addEventListener("click", () =>
       deleteProduct(Number(btn.dataset.id))
     );
   });
 
-  // Bo'sh holat
   emptyState.style.display = filtered.length === 0 ? "block" : "none";
 
-  // Statistika (butun ro'yxat bo'yicha, qidiruvdan qat'i nazar)
   const totalCount = products.reduce((sum, p) => sum + p.qty, 0);
   const totalValue = products.reduce((sum, p) => sum + p.price * p.qty, 0);
   statCount.textContent = totalCount;
@@ -115,5 +125,5 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-// Boshlang'ich chizish
-render();
+// Boshlang'ich yuklash
+fetchProducts();
